@@ -1,0 +1,33 @@
+stages:
+  - deploy
+
+.deploy:
+  stage: deploy
+  script:
+    - rm -rf $APP_PATH/*
+    - mkdir -p $APP_PATH
+    - cp -R * $APP_PATH/
+    - cd $APP_PATH/
+    - touch .env
+    - echo "VITE_API_URL=$VITE_API_URL" >> .env
+    - npm install
+    - npm run build
+    - pm2 delete $APP_NAME --silent || true
+    - npm run start:prod
+  only:
+    - main
+  when: manual
+  allow_failure: false
+
+Deploy Prod:
+  extends: .deploy
+  tags:
+    - fake-admin
+    - prod
+  variables:
+    APP_PATH: /var/www/admin.testerschallenge.com
+    APP_NAME: admin-testerschallenge
+    VITE_API_URL: https://admin-api.testerschallenge.com
+  environment:
+    name: production
+    url: https://admin.testerschallenge.com
